@@ -1,5 +1,8 @@
 console.log('[DevLira] Flappy Bird');
 
+const som_HIT = new Audio();
+som_HIT.src = './efeitos/efeitos_hit.wav' ///efeito de som 
+
 const sprites = new Image();
 sprites.src='./sprites.png';
 
@@ -62,17 +65,49 @@ const chao = {
     },
 };
 
-//Comando do passarinho 
-const flappyBird = {
+function fazColisao(flappyBird, chao) { // colisão no chão
+    const flappyBirdY = flappyBird.y + flappyBird.altura;
+    const chaoY = chao.y;
+
+    if(flappyBirdY >= chaoY) {
+        return true;
+    }
+
+    return false;
+
+}
+function criaflappyBird() {
+    //Comando do passarinho 
+    const flappyBird = {
     spriteX: 0,
     spriteY: 0,
     largura: 33,
     altura: 24,
     x: 10,
     y: 50,
+    pulo: 4.6,
+    pula() {
+        console.log('devo pular');
+        console.log('[antes]', flappyBird.velocidade);
+        flappyBird.velocidade = - flappyBird.pulo;
+        console.log(['depois'], flappyBird.velocidade);
+    },
     gravidade: 4,
     velocidade: 0,
-    atualiza () {
+    atualiza() {
+
+        if(fazColisao(flappyBird, chao)) {
+            console.log('fez colisao');
+            som_HIT.play();
+
+            setTimeout (() => {
+            mudarParaTela(telas.inicio); /// Quando o flappybird atinge o chão ele volta para o inicio.
+
+            }, 500);
+            
+            return;
+        }
+
         flappyBird.velocidade = flappyBird.velocidade + flappyBird.gravidade;
         flappyBird.y = flappyBird.y + flappyBird.gravidade; // fazer o flappybird cair.
     },
@@ -87,6 +122,9 @@ const flappyBird = {
         
         
     } 
+}
+return flappyBird;
+
 }
 
 ///{mensagemGetReady} // comando de tela de inicio.
@@ -108,17 +146,71 @@ const mensagemGetReady = {
     }
 }
 
+/// função de mudar para tela ativa
+//telas
+
+const globais = {};
+let telaAtiva = {};
+function mudarParaTela(novaTela) {
+    telaAtiva = novaTela;
+
+    if(telaAtiva.inicializa){
+        telaAtiva.inicializa();
+    }
+    
+}
+
+const telas = {
+    inicio: {
+        inicializa() {
+            globais.flappyBird = criaflappyBird();
+        },
+        desenha() {
+            planoDeFundo . desenha ( ) ;
+            chao.desenha();
+            globais.flappyBird.desenha();
+            mensagemGetReady.desenha();
+         },
+         click () {
+            mudarParaTela(telas.Jogo);
+        },
+         atualiza(){
+
+         }
+    }
+};
+
+telas.Jogo = {
+    desenha() {
+        planoDeFundo . desenha ( ) ;
+        chao.desenha();
+        globais.flappyBird.desenha();
+    },
+    click() {
+        globais.flappyBird.pula();
+
+    },
+    atualiza() {
+        globais.flappyBird.atualiza();
+    }
+};
 
 function loop() {
-    flappyBird.atualiza();
-    planoDeFundo . desenha ( ) ;
-   chao.desenha();
-   flappyBird.desenha();
-   mensagemGetReady.desenha();
-   
+    telaAtiva.desenha();
+    telaAtiva.atualiza();
 
     requestAnimationFrame(loop); // Desenhar o quadro na tela, de forma infinita 
 
 }
+
+ /// função de click na tela
+
+window.addEventListener('click', function(){
+    if (telaAtiva.click) {
+        telaAtiva.click();
+    }
+});
+
+mudarParaTela(telas.inicio); 
 
 loop();
